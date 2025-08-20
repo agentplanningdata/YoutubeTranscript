@@ -24,22 +24,22 @@
 ### Phase 2: YouTube API 통합
 
 #### ✅ 2.1 YouTube API 클라이언트
-- [ ] **테스트**: `test_youtube_api_client.py::test_api_client_initialization` - API 클라이언트 초기화
-- [ ] **테스트**: `test_youtube_api_client.py::test_invalid_api_key_raises_exception` - 잘못된 API 키 예외 처리
-- [ ] **테스트**: `test_youtube_api_client.py::test_api_quota_exceeded_handling` - API 할당량 초과 처리
+- [✅] **테스트**: `test_youtube_api_client.py::test_api_client_initialization` - API 클라이언트 초기화
+- [✅] **테스트**: `test_youtube_api_client.py::test_invalid_api_key_raises_exception` - 잘못된 API 키 예외 처리
+- [✅] **테스트**: `test_youtube_api_client.py::test_api_quota_exceeded_handling` - API 할당량 초과 처리
 
 #### ✅ 2.2 채널 검색 기능
-- [ ] **테스트**: `test_channel_search.py::test_search_channel_by_name` - 채널명으로 검색
-- [ ] **테스트**: `test_channel_search.py::test_search_returns_channel_metadata` - 채널 메타데이터 반환 확인
-- [ ] **테스트**: `test_channel_search.py::test_search_nonexistent_channel` - 존재하지 않는 채널 처리
-- [ ] **테스트**: `test_channel_search.py::test_search_result_pagination` - 검색 결과 페이징 처리
-- [ ] **리팩토링**: 검색 결과 데이터 모델 추상화
+- [✅] **테스트**: `test_channel_search.py::test_search_channel_by_name` - 채널명으로 검색
+- [✅] **테스트**: `test_channel_search.py::test_search_returns_channel_metadata` - 채널 메타데이터 반환 확인
+- [✅] **테스트**: `test_channel_search.py::test_search_nonexistent_channel` - 존재하지 않는 채널 처리
+- [✅] **테스트**: `test_channel_search.py::test_search_result_pagination` - 검색 결과 페이징 처리
+- [✅] **리팩토링**: 검색 결과 데이터 모델 추상화
 
 #### ✅ 2.3 영상 정보 조회
-- [ ] **테스트**: `test_video_info.py::test_get_latest_video_from_channel` - 채널의 최신 영상 조회
-- [ ] **테스트**: `test_video_info.py::test_get_video_metadata` - 영상 메타데이터 추출
-- [ ] **테스트**: `test_video_info.py::test_get_video_duration` - 영상 길이 정보 추출
-- [ ] **테스트**: `test_video_info.py::test_channel_with_no_videos` - 영상이 없는 채널 처리
+- [✅] **테스트**: `test_video_info.py::test_get_video_details` - 영상 상세 정보 조회
+- [✅] **테스트**: `test_video_info.py::test_get_channel_videos` - 채널의 영상 목록 조회
+- [✅] **테스트**: `test_video_info.py::test_video_metadata_validation` - 영상 메타데이터 검증
+- [✅] **리팩토링**: 영상 데이터 모델 생성
 
 ### Phase 3: 자막 다운로드 및 처리
 
@@ -115,11 +115,31 @@
 - [ ] **테스트**: `test_question_agent.py::test_question_categories` - 질문 카테고리 분류
 - [ ] **리팩토링**: 질문 생성 템플릿 모듈화
 
-#### ✅ 6.4 RAG 에이전트
+#### ✅ 6.4 RAG 에이전트 (단일 영상)
 - [ ] **테스트**: `test_rag_agent.py::test_answer_generation_with_context` - 컨텍스트 기반 답변 생성
 - [ ] **테스트**: `test_rag_agent.py::test_source_citation_with_timestamps` - 출처 인용 및 타임스탬프
 - [ ] **테스트**: `test_rag_agent.py::test_insufficient_context_handling` - 불충분한 컨텍스트 처리
 - [ ] **테스트**: `test_rag_agent.py::test_confidence_score_calculation` - 신뢰도 점수 계산
+
+#### ✅ 6.5 쿼리 분석 에이전트
+- [ ] **테스트**: `test_query_analysis_agent.py::test_extract_channel_from_query` - 질문에서 채널 정보 추출
+- [ ] **테스트**: `test_query_analysis_agent.py::test_extract_topic_keywords` - 주제 키워드 추출
+- [ ] **테스트**: `test_query_analysis_agent.py::test_temporal_context_detection` - 시간적 맥락 탐지
+- [ ] **테스트**: `test_query_analysis_agent.py::test_query_classification` - 질문 유형 분류 (단일/크로스 영상)
+- [ ] **리팩토링**: 쿼리 분석 파이프라인 모듈화
+
+#### ✅ 6.6 채널 해석 에이전트  
+- [ ] **테스트**: `test_channel_resolution_agent.py::test_resolve_channel_nickname` - 채널 닉네임을 실제 채널명으로 매칭
+- [ ] **테스트**: `test_channel_resolution_agent.py::test_fuzzy_channel_matching` - 부정확한 채널명 처리
+- [ ] **테스트**: `test_channel_resolution_agent.py::test_channel_disambiguation` - 유사 채널명 구분
+- [ ] **테스트**: `test_channel_resolution_agent.py::test_channel_not_found_handling` - 채널을 찾을 수 없는 경우 처리
+
+#### ✅ 6.7 크로스 영상 RAG 에이전트
+- [ ] **테스트**: `test_cross_video_rag_agent.py::test_multi_video_search` - 여러 영상에 걸친 검색
+- [ ] **테스트**: `test_cross_video_rag_agent.py::test_temporal_filtering` - 시간 범위 필터링
+- [ ] **테스트**: `test_cross_video_rag_agent.py::test_relevance_ranking_across_videos` - 영상 간 관련도 순위화
+- [ ] **테스트**: `test_cross_video_rag_agent.py::test_source_aggregation` - 여러 영상 출처 통합
+- [ ] **리팩토링**: 크로스 영상 검색 알고리즘 최적화
 
 ### Phase 7: 고도화된 RAG 구현
 
@@ -138,6 +158,19 @@
 - [ ] **테스트**: `test_crag.py::test_response_correction_mechanism` - 응답 보정 메커니즘
 - [ ] **테스트**: `test_crag.py::test_fallback_to_general_knowledge` - 일반 지식 기반 fallback
 - [ ] **리팩토링**: RAG 전략 팩토리 패턴 적용
+
+#### ✅ 7.4 Cross-Video RAG (크로스 영상 검색)
+- [ ] **테스트**: `test_cross_video_rag.py::test_multi_video_context_fusion` - 여러 영상 컨텍스트 융합
+- [ ] **테스트**: `test_cross_video_rag.py::test_temporal_relevance_scoring` - 시간적 관련성 스코링
+- [ ] **테스트**: `test_cross_video_rag.py::test_channel_scoped_search` - 채널 범위 검색
+- [ ] **테스트**: `test_cross_video_rag.py::test_duplicate_content_filtering` - 중복 컨텐츠 필터링
+
+#### ✅ 7.5 Query Analysis & Optimization (쿼리 분석 및 최적화)
+- [ ] **테스트**: `test_query_optimization.py::test_natural_language_parsing` - 자연어 파싱
+- [ ] **테스트**: `test_query_optimization.py::test_entity_extraction` - 개체명 인식 (채널, 인물, 주제)
+- [ ] **테스트**: `test_query_optimization.py::test_query_expansion` - 쿼리 확장
+- [ ] **테스트**: `test_query_optimization.py::test_semantic_query_transformation` - 의미적 쿼리 변환
+- [ ] **리팩토링**: 쿼리 최적화 전략 통합
 
 ### Phase 8: 채널 모니터링 시스템
 
@@ -167,10 +200,12 @@
 - [ ] **테스트**: `test_channel_api.py::test_remove_channel_endpoint` - 채널 제거 엔드포인트
 
 #### ✅ 9.2 Q&A API
-- [ ] **테스트**: `test_qa_api.py::test_ask_question_endpoint` - 질문 답변 엔드포인트
+- [ ] **테스트**: `test_qa_api.py::test_ask_question_endpoint` - 질문 답변 엔드포인트 (단일 영상)
+- [ ] **테스트**: `test_qa_api.py::test_cross_video_question_endpoint` - 크로스 영상 질문 답변 엔드포인트
 - [ ] **테스트**: `test_qa_api.py::test_get_video_summary_endpoint` - 영상 요약 조회 엔드포인트
 - [ ] **테스트**: `test_qa_api.py::test_get_suggested_questions_endpoint` - 예상 질문 조회 엔드포인트
 - [ ] **테스트**: `test_qa_api.py::test_conversation_history_endpoint` - 대화 이력 관리 엔드포인트
+- [ ] **테스트**: `test_qa_api.py::test_query_analysis_endpoint` - 쿼리 분석 결과 엔드포인트
 
 #### ✅ 9.3 API 미들웨어 및 보안
 - [ ] **테스트**: `test_api_middleware.py::test_rate_limiting` - 요청 제한
@@ -246,7 +281,7 @@
 
 각 테스트 완료 시 `[ ]`를 `[✅]`로 변경하여 진행 상황을 추적합니다.
 
-**현재 진행 상황**: 6/83 테스트 완료 (7.2%)
+**현재 진행 상황**: 16/108 테스트 완료 (14.8%)
 
 ---
 

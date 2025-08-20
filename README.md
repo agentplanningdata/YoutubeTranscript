@@ -9,6 +9,8 @@ YouTube 채널의 새 영상 업로드를 실시간으로 모니터링하고, �
 - 영상 자막 자동 다운로드 및 분석
 - AI 기반 영상 요약 및 예상 질문 생성
 - RAG 기반 Q&A (타임스탬프 링크 포함)
+  - **단일 영상 Q&A**: 특정 영상에 대한 질문 답변
+  - **크로스 영상 Q&A**: 과거 영상들을 포함한 전체 채널 히스토리 검색
 
 ## 🏗️ 시스템 아키텍처
 
@@ -44,8 +46,14 @@ graph TD
     K --> M[사용자 알림]
     L --> M
     M --> N[사용자 질문 입력]
-    N --> O[벡터 검색]
+    N --> R{질문 유형 분석}
+    R -->|특정 영상| O[단일 영상 벡터 검색]
+    R -->|전체 히스토리| S[쿼리 분석 에이전트]
+    S --> T[채널 식별 및 매칭]
+    T --> U[시간 범위 추출]
+    U --> V[크로스 영상 벡터 검색]
     O --> P[RAG 기반 답변 생성]
+    V --> P
     P --> Q[타임스탬프 링크 제공]
 ```
 
@@ -66,7 +74,10 @@ graph TD
 # 에이전트 구조 예시
 - SummaryAgent: 영상 내용 요약
 - QuestionAgent: 예상 질문 생성  
-- RAGAgent: 검색 증강 생성
+- RAGAgent: 검색 증강 생성 (단일 영상)
+- QueryAnalysisAgent: 자연어 질문 분석 및 구조화
+- ChannelResolutionAgent: 채널명 추출 및 매칭  
+- CrossVideoRAGAgent: 멀티 영상 검색 증강 생성
 - HistoryManager: 대화 이력 관리
 ```
 
@@ -74,11 +85,22 @@ graph TD
 - **Adaptive RAG**: 질문 유형별 검색 전략 최적화
 - **Self-RAG**: 검색 결과 품질 자체 평가 및 재검색
 - **CRAG**: 신뢰도 기반 응답 보정
+- **Cross-Video RAG**: 여러 영상에 걸친 종합적 검색 및 답변 생성
+- **Query Analysis & Optimization**: 자연어 질문의 구조 분석 및 검색 쿼리 최적화
 
 ### 5. 벡터 데이터베이스 (ChromaDB)
 - 자막 청크 임베딩 저장
-- 메타데이터: 타임스탬프, 영상 ID, 채널 정보
+- 메타데이터: 타임스탬프, 영상 ID, 채널 정보, 업로드 날짜, 영상 제목
 - 의미적 유사도 검색 최적화
+- 크로스 영상 검색을 위한 채널별 컬렉션 관리
+- 시간 범위 기반 필터링 지원
+
+### 6. 크로스 영상 Q&A 시스템
+- **자연어 쿼리 분석**: "저번에 슈카가..." → 채널(슈카월드) + 시간(과거) + 주제 추출  
+- **지능형 채널 매칭**: 닉네임, 별칭을 실제 채널명으로 자동 변환
+- **시간적 맥락 이해**: "최근에", "저번에", "예전에" 등 시간 표현 처리
+- **멀티 소스 답변**: 여러 영상에서 관련 정보를 수집하여 종합적 답변 제공
+- **컨텍스트 랭킹**: 질문과의 관련도, 시간적 근접성, 채널 일치도 기반 순위화
 
 ## 📦 설치 및 실행
 
@@ -152,21 +174,44 @@ python monitor.py --channel "채널ID"
 # API 사용 예시
 import requests
 
+# 1. 단일 영상 Q&A
 response = requests.post('/api/chat', json={
     'question': '이 영상에서 가장 중요한 포인트가 뭔가요?',
     'video_id': 'VIDEO_ID'
 })
 
+# 2. 크로스 영상 Q&A (전체 채널 히스토리 검색)
+response = requests.post('/api/chat', json={
+    'question': '저번에 슈카가 워렌버핏 포트폴리오 관련해서 뭐라고했더라?',
+    'mode': 'cross_video'
+})
+
 print(response.json())
 # {
-#   'answer': '주요 포인트는...',
+#   'answer': '슈카월드 채널에서 워렌버핏 포트폴리오에 대해...',
 #   'sources': [
 #     {
 #       'text': '관련 자막 내용',
 #       'timestamp': 120,
-#       'url': 'https://youtube.com/watch?v=VIDEO_ID&t=120s'
+#       'video_id': 'VIDEO_ID_1',
+#       'video_title': '워렌버핏의 투자 철학',
+#       'channel': '슈카월드',
+#       'url': 'https://youtube.com/watch?v=VIDEO_ID_1&t=120s'
+#     },
+#     {
+#       'text': '추가 관련 내용',
+#       'timestamp': 340,
+#       'video_id': 'VIDEO_ID_2', 
+#       'video_title': '버크셔 해서웨이 분석',
+#       'channel': '슈카월드',
+#       'url': 'https://youtube.com/watch?v=VIDEO_ID_2&t=340s'
 #     }
-#   ]
+#   ],
+#   'query_analysis': {
+#     'detected_channel': '슈카월드',
+#     'topic': '워렌버핏 포트폴리오',
+#     'temporal_context': '과거 언급'
+#   }
 # }
 ```
 
@@ -222,5 +267,29 @@ RAG_CONFIG = {
     'score_threshold': 0.7, # 유사도 임계값
     'rerank': True,        # 재순위화 여부
     'adaptive_threshold': True # 적응적 임계값
+}
+
+# 크로스 영상 RAG 설정
+CROSS_VIDEO_RAG_CONFIG = {
+    'max_videos': 10,     # 검색 대상 최대 영상 수
+    'temporal_weight': 0.3, # 시간적 근접성 가중치
+    'channel_weight': 0.4,  # 채널 일치 가중치
+    'semantic_weight': 0.3, # 의미적 유사도 가중치
+    'min_confidence': 0.6,  # 최소 신뢰도 임계값
+    'max_sources': 5      # 답변에 포함할 최대 출처 수
+}
+
+# 쿼리 분석 설정
+QUERY_ANALYSIS_CONFIG = {
+    'channel_aliases': {  # 채널 별칭 매핑
+        '슈카': '슈카월드',
+        '김작가': '김작가 시크릿',
+        '할명수': '할명수생각'
+    },
+    'temporal_keywords': {  # 시간 표현 키워드
+        '최근': 30,  # 최근 30일
+        '저번': 90,  # 지난 90일
+        '예전': 365  # 1년 전까지
+    }
 }
 ```
