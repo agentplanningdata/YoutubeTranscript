@@ -9,7 +9,6 @@ YouTube 채널의 새 영상 업로드를 실시간으로 모니터링하고, �
 - 영상 자막 자동 다운로드 및 분석
 - AI 기반 영상 요약 및 예상 질문 생성
 - RAG 기반 Q&A (타임스탬프 링크 포함)
-- 관련 뉴스 검색 및 링크 제공
 
 ## 🏗️ 시스템 아키텍처
 
@@ -21,11 +20,8 @@ YouTube 채널의 새 영상 업로드를 실시간으로 모니터링하고, �
 - **데이터베이스**: PostgreSQL
 - **YouTube API**: YouTube Data API v3, youtube_transcript_api
 - **AI 모델**: OpenAI GPT-4/Claude 또는 로컬 LLM
-- **뉴스 API**: NewsAPI 또는 Google News API
 
 ### RAG 기술
-- **Adaptive RAG**: 쿼리 복잡도에 따른 검색 전략 조정
-- **Self-RAG**: 검색 결과 자체 검증 및 재검색
 - **CRAG**: 검색 결과 신뢰도 기반 응답 생성
 
 ## 🔄 시스템 플로우
@@ -34,9 +30,10 @@ YouTube 채널의 새 영상 업로드를 실시간으로 모니터링하고, �
 graph TD
     A[사용자 채널 입력] --> B[YouTube API 채널 검색]
     B --> C[채널 선택 및 와치리스트 추가]
+    C --> F[최신 영상 자막 다운로드]
     C --> D[주기적 모니터링 시작]
     D --> E{새 영상 발견?}
-    E -->|Yes| F[영상 자막 다운로드]
+    E -->|Yes| F
     E -->|No| D
     F --> G[자막 청킹 및 벡터화]
     G --> H[ChromaDB 저장]
@@ -70,7 +67,6 @@ graph TD
 - SummaryAgent: 영상 내용 요약
 - QuestionAgent: 예상 질문 생성  
 - RAGAgent: 검색 증강 생성
-- NewsAgent: 관련 뉴스 검색
 - HistoryManager: 대화 이력 관리
 ```
 
@@ -127,9 +123,6 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 
 # 데이터베이스
 DATABASE_URL=postgresql://user:password@localhost:5432/youtube_transcript
-
-# 뉴스 API
-NEWS_API_KEY=your_news_api_key
 
 # 모니터링 설정
 MONITORING_INTERVAL_MINUTES=5
