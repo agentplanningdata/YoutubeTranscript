@@ -594,6 +594,192 @@ class VideoInfo:
         return self._metadata.get(key, default)
 
 
+@dataclass
+class TranscriptSegment:
+    """
+    YouTube 자막 세그먼트를 나타내는 데이터 모델
+    
+    Attributes:
+        text: 자막 텍스트
+        start_time: 시작 시간 (초)
+        end_time: 종료 시간 (초, 선택사항)
+        duration: 지속 시간 (초, 선택사항)
+        segment_id: 세그먼트 고유 ID (선택사항)
+        confidence: 자막 신뢰도 점수 (선택사항, 0.0-1.0)
+        language: 언어 코드 (선택사항)
+    """
+    
+    text: str
+    start_time: float
+    segment_id: Optional[str] = None
+    end_time: Optional[float] = None
+    duration: Optional[float] = None
+    confidence: Optional[float] = None
+    language: Optional[str] = None
+    
+    # 내부 메타데이터
+    _metadata: Dict[str, Any] = field(default_factory=dict, repr=False)
+    
+    def __post_init__(self):
+        """데이터 검증 및 정규화"""
+        self.validate()
+        self.normalize()
+    
+    def validate(self) -> None:
+        """필드 유효성 검사"""
+        # 텍스트 검증
+        if not isinstance(self.text, str):
+            raise ValueError("Text must be a string")
+        
+        if not self.text.strip():
+            raise ValueError("Text cannot be empty or whitespace only")
+        
+        # 시간 검증
+        if not isinstance(self.start_time, (int, float)):
+            raise ValueError("Start time must be a number")
+        
+        if self.start_time < 0:
+            raise ValueError("Start time cannot be negative")
+        
+        if self.end_time is not None:
+            if not isinstance(self.end_time, (int, float)):
+                raise ValueError("End time must be a number")
+            
+            if self.end_time < self.start_time:
+                raise ValueError("End time cannot be before start time")
+        
+        if self.duration is not None:
+            if not isinstance(self.duration, (int, float)):
+                raise ValueError("Duration must be a number")
+            
+            if self.duration <= 0:
+                raise ValueError("Duration must be positive")
+        
+        # 신뢰도 점수 검증
+        if self.confidence is not None:
+            if not isinstance(self.confidence, (int, float)):
+                raise ValueError("Confidence must be a number")
+            
+            if not 0.0 <= self.confidence <= 1.0:
+                raise ValueError("Confidence must be between 0.0 and 1.0")
+    
+    def normalize(self) -> None:
+        """데이터 정규화"""
+        # 텍스트 정규화
+        self.text = self.text.strip()
+        
+        # end_time이 없으면 duration으로부터 계산
+        if self.end_time is None and self.duration is not None:
+            self.end_time = self.start_time + self.duration
+        
+        # duration이 없으면 end_time으로부터 계산
+        if self.duration is None and self.end_time is not None:
+            self.duration = self.end_time - self.start_time
+        
+        # 세그먼트 ID가 없으면 생성
+        if self.segment_id is None:
+            import hashlib
+            text_hash = hashlib.md5(self.text.encode()).hexdigest()[:8]
+            self.segment_id = f"seg_{int(self.start_time)}_{text_hash}"
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'TranscriptSegment':
+        """딕셔너리에서 TranscriptSegment 객체를 생성"""
+        # 기존 형태와 호환성을 위해 'start' -> 'start_time' 매핑
+        start_time = data.get('start_time', data.get('start', 0.0))
+        end_time = data.get('end_time', data.get('end'))
+        duration = data.get('duration')
+        
+        return cls(
+            text=data.get('text', ''),
+            start_time=start_time,
+            end_time=end_time,
+            duration=duration,
+            segment_id=data.get('segment_id', data.get('id')),
+            confidence=data.get('confidence'),
+            language=data.get('language')
+        )
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """TranscriptSegment 객체를 딕셔너리로 변환"""
+        result = {
+            'text': self.text,
+            'start_time': self.start_time,
+            'segment_id': self.segment_id,
+        }
+        
+        # 선택적 필드들 추가 (None이 아닌 경우만)
+        optional_fields = ['end_time', 'duration', 'confidence', 'language']
+        
+        for field_name in optional_fields:
+            value = getattr(self, field_name)
+            if value is not None:
+                result[field_name] = value
+        
+        return result
+    
+    def get_formatted_time(self, format_type: str = "mm:ss") -> str:
+        """포맷된 시간 문자열 반환"""
+        if format_type == "mm:ss":
+            minutes = int(self.start_time // 60)
+            seconds = int(self.start_time % 60)
+            return f"{minutes:02d}:{seconds:02d}"
+        elif format_type == "hh:mm:ss":
+            hours = int(self.start_time // 3600)
+            minutes = int((self.start_time % 3600) // 60)
+            seconds = int(self.start_time % 60)
+            return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+        elif format_type == "korean":
+            minutes = int(self.start_time // 60)
+            seconds = int(self.start_time % 60)
+            if minutes > 0:
+                return f"{minutes}분 {seconds}초"
+            else:
+                return f"{seconds}초"
+        else:
+            return str(self.start_time)
+    
+    def get_formatted_range(self, format_type: str = "mm:ss") -> str:
+        """시작-종료 시간 범위를 포맷된 문자열로 반환"""
+        start_str = self.get_formatted_time(format_type)
+        
+        if self.end_time is not None:
+            # 임시로 end_time을 사용해서 포맷
+            original_start = self.start_time
+            self.start_time = self.end_time
+            end_str = self.get_formatted_time(format_type)
+            self.start_time = original_start  # 원래 값 복원
+            
+            return f"{start_str}-{end_str}"
+        else:
+            return start_str
+    
+    def is_short_segment(self, threshold_seconds: float = 2.0) -> bool:
+        """짧은 세그먼트인지 확인"""
+        if self.duration is not None:
+            return self.duration <= threshold_seconds
+        elif self.end_time is not None:
+            return (self.end_time - self.start_time) <= threshold_seconds
+        else:
+            return len(self.text) < 10  # 짧은 텍스트로 추정
+    
+    def get_word_count(self) -> int:
+        """단어 수 계산 (공백 기준)"""
+        return len(self.text.split())
+    
+    def get_char_count(self) -> int:
+        """문자 수 계산"""
+        return len(self.text)
+    
+    def add_metadata(self, key: str, value: Any) -> None:
+        """메타데이터 추가"""
+        self._metadata[key] = value
+    
+    def get_metadata(self, key: str, default: Any = None) -> Any:
+        """메타데이터 조회"""
+        return self._metadata.get(key, default)
+
+
 @dataclass 
 class VideoSearchResult:
     """

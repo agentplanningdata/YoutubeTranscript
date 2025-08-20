@@ -229,7 +229,7 @@ pytest tests/test_youtube_api.py
 pytest --cov=src tests/
 ```
 
-### TDD 개발 프로세스
+### TDD 개발 프로세스 ([켄트벡 TDD Cursor Rule](https://www.stdy.blog/warning-signs-for-off-track-ai-and-tdd-system-prompts-by-kent-beck/))
 1. 실패하는 테스트 작성
 2. 최소한의 코드로 테스트 통과
 3. 리팩토링 (구조적 변경)

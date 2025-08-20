@@ -9,8 +9,12 @@ gradio==4.44.0
 
 # LangChain & AI
 langchain==0.3.0
-langgraph==0.2.14
+langgraph==0.6.6
 openai==1.45.0
+langchain-google-genai==2.0.8
+
+# Observability & Monitoring
+langfuse==3.3.0
 
 # Vector Database & Embeddings
 chromadb==0.5.5

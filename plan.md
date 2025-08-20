@@ -171,17 +171,17 @@
   - 강력한 에러 처리 (입력검증, API오류, 상태복구)
   - 완전한 워크플로우 (초기화→설정→실행→결과)
 
-#### ✅ 6.2 요약 에이전트 🎯 **핵심 기능**
-- [ ] **테스트**: `test_summary_agent.py::test_generate_summary_from_transcript` - 자막 기반 요약 생성
-- [ ] **테스트**: `test_summary_agent.py::test_summary_length_control` - 요약 길이 제어
-- [ ] **테스트**: `test_summary_agent.py::test_summary_with_key_timestamps` - 주요 타임스탬프 포함 요약
-- [ ] **테스트**: `test_summary_agent.py::test_empty_transcript_handling` - 빈 자막 처리
+#### ✅ 6.2 요약 에이전트 🎯 **핵심 기능** - **완료**
+- [x] **테스트**: `test_summary_agent.py::test_generate_summary_from_transcript` - 자막 기반 요약 생성
+- [x] **테스트**: `test_summary_agent.py::test_summary_length_control` - 요약 길이 제어
+- [x] **테스트**: `test_summary_agent.py::test_summary_with_key_timestamps` - 주요 타임스탬프 포함 요약
+- [x] **테스트**: `test_summary_agent.py::test_empty_transcript_handling` - 빈 자막 처리
 
-#### ✅ 6.3 RAG 에이전트 (단일 영상) 🎯 **핵심 기능**
-- [ ] **테스트**: `test_rag_agent.py::test_answer_generation_with_context` - 컨텍스트 기반 답변 생성
-- [ ] **테스트**: `test_rag_agent.py::test_source_citation_with_timestamps` - 출처 인용 및 타임스탬프
-- [ ] **테스트**: `test_rag_agent.py::test_insufficient_context_handling` - 불충분한 컨텍스트 처리
-- [ ] **테스트**: `test_rag_agent.py::test_confidence_score_calculation` - 신뢰도 점수 계산
+#### ✅ 6.3 LCEL RAG 체인 🎯 **핵심 기능** - **완료**
+- [x] **테스트**: `test_rag_chain.py::test_format_context` - 컨텍스트 포맷팅 및 타임스탬프
+- [x] **테스트**: `test_rag_chain.py::test_format_sources` - 출처 정보 및 메타데이터
+- [x] **테스트**: `test_rag_chain.py::test_rag_chain_invoke` - LCEL 기반 RAG 체인
+- [x] **테스트**: `test_rag_chain.py::test_rag_chain_streaming` - 실시간 답변 스트리밍
 
 ### Phase 7: 고도화된 RAG 구현
 
@@ -217,15 +217,15 @@
 ### Phase 8: 채널 모니터링 시스템
 
 #### ✅ 8.1 즉시 처리 시스템 (채널 추가 시)
-- [ ] **테스트**: `test_immediate_processing.py::test_process_latest_video_on_channel_add` - 채널 추가 시 최신 영상 처리
-- [ ] **테스트**: `test_immediate_processing.py::test_skip_if_video_already_processed` - 이미 처리된 영상 스킵
-- [ ] **테스트**: `test_immediate_processing.py::test_processing_pipeline_completion` - 전체 처리 파이프라인 완료 확인
+- [✅] **테스트**: `test_immediate_processing.py::test_process_latest_video_on_channel_add` - 채널 추가 시 최신 영상 처리
+- [✅] **테스트**: `test_immediate_processing.py::test_skip_if_video_already_processed` - 이미 처리된 영상 스킵
+- [✅] **테스트**: `test_immediate_processing.py::test_processing_pipeline_completion` - 전체 처리 파이프라인 완료 확인
 
 #### ✅ 8.2 주기적 모니터링
-- [ ] **테스트**: `test_periodic_monitoring.py::test_scheduled_channel_check` - 스케줄된 채널 확인
-- [ ] **테스트**: `test_periodic_monitoring.py::test_new_video_detection` - 새 영상 탐지
-- [ ] **테스트**: `test_periodic_monitoring.py::test_monitoring_interval_configuration` - 모니터링 간격 설정
-- [ ] **테스트**: `test_periodic_monitoring.py::test_error_recovery_in_monitoring` - 모니터링 중 에러 복구
+- [✅] **테스트**: `test_periodic_monitoring.py::test_scheduled_channel_check` - 스케줄된 채널 확인
+- [✅] **테스트**: `test_periodic_monitoring.py::test_new_video_detection` - 새 영상 탐지
+- [✅] **테스트**: `test_periodic_monitoring.py::test_monitoring_interval_configuration` - 모니터링 간격 설정
+- [✅] **테스트**: `test_periodic_monitoring.py::test_error_recovery_in_monitoring` - 모니터링 중 에러 복구
 
 #### ✅ 8.3 알림 시스템
 - [ ] **테스트**: `test_notification.py::test_new_video_notification` - 새 영상 알림
@@ -242,12 +242,9 @@
 - [ ] **테스트**: `test_channel_api.py::test_remove_channel_endpoint` - 채널 제거 엔드포인트
 
 #### ✅ 9.2 Q&A API
-- [ ] **테스트**: `test_qa_api.py::test_ask_question_endpoint` - 질문 답변 엔드포인트 (단일 영상)
-- [ ] **테스트**: `test_qa_api.py::test_cross_video_question_endpoint` - 크로스 영상 질문 답변 엔드포인트
+- [ ] **테스트**: `test_qa_api.py::test_ask_question_endpoint` - 질문 답변 엔드포인트
 - [ ] **테스트**: `test_qa_api.py::test_get_video_summary_endpoint` - 영상 요약 조회 엔드포인트
-- [ ] **테스트**: `test_qa_api.py::test_get_suggested_questions_endpoint` - 예상 질문 조회 엔드포인트
 - [ ] **테스트**: `test_qa_api.py::test_conversation_history_endpoint` - 대화 이력 관리 엔드포인트
-- [ ] **테스트**: `test_qa_api.py::test_query_analysis_endpoint` - 쿼리 분석 결과 엔드포인트
 
 #### ✅ 9.3 API 미들웨어 및 보안
 - [ ] **테스트**: `test_api_middleware.py::test_rate_limiting` - 요청 제한
@@ -271,7 +268,6 @@
 
 #### ✅ 10.3 영상 정보 표시 UI
 - [ ] **테스트**: `test_gradio_video_ui.py::test_video_summary_display` - 영상 요약 표시
-- [ ] **테스트**: `test_gradio_video_ui.py::test_suggested_questions_display` - 예상 질문 표시
 - [ ] **테스트**: `test_gradio_video_ui.py::test_video_metadata_display` - 영상 메타데이터 표시
 - [ ] **리팩토링**: UI 컴포넌트 재사용성 개선
 
@@ -324,6 +320,12 @@
 - [ ] **테스트**: `test_cross_video_rag_agent.py::test_source_aggregation` - 여러 영상 출처 통합
 - [ ] **리팩토링**: 크로스 영상 검색 알고리즘 최적화
 
+#### ✅ 13 RAG 기법 강화
+- query expansion
+- filtering(LLM 기반, 임베딩 기반), 문서압축 파이프라인
+- 
+
+
 ## 🔄 TDD 사이클 가이드라인
 
 ### Red Phase (실패하는 테스트 작성)
@@ -351,9 +353,9 @@
 
 각 테스트 완료 시 `[ ]`를 `[✅]`로 변경하여 진행 상황을 추적합니다.
 
-**현재 진행 상황**: 129/193 테스트 완료 (66.8%)
+**현재 진행 상황**: 137/193 테스트 완료 (71.0%)
 
-**🎯 우선 구현 목표**: Phase 6.2 요약 에이전트 + Phase 6.3 RAG 에이전트 (핵심 기능)
+**🎯 우선 구현 목표**: Phase 7 고도화된 RAG 구현 - Phase 6.3 LCEL RAG 체인 완료! ✅
 
 ---
 

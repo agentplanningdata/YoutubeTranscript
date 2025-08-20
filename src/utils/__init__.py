@@ -16,8 +16,16 @@ from .exceptions import (
     ConfigurationError,
     ChannelNotFoundError,
     VideoProcessingError,
+    ProcessingError,
     EmbeddingError,
     ChromaDBError
+)
+from .langfuse_utils import (
+    langfuse_manager,
+    get_langfuse_callbacks,
+    is_langfuse_enabled,
+    trace_agent_execution,
+    create_langfuse_config_for_agent
 )
 
 __all__ = [
@@ -37,6 +45,14 @@ __all__ = [
     "ConfigurationError",
     "ChannelNotFoundError",
     "VideoProcessingError",
+    "ProcessingError",
     "EmbeddingError",
-    "ChromaDBError"
+    "ChromaDBError",
+    
+    # Langfuse utilities
+    "langfuse_manager",
+    "get_langfuse_callbacks",
+    "is_langfuse_enabled",
+    "trace_agent_execution",
+    "create_langfuse_config_for_agent"
 ]

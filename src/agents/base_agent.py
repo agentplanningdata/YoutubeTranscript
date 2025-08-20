@@ -18,11 +18,17 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage, BaseMessage
 from langchain_core.tools import BaseTool
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # 프로젝트 모듈
 from src.utils.exceptions import ConfigurationError
 from src.utils.logger import get_project_logger
+from src.utils.langfuse_utils import (
+    get_langfuse_callbacks,
+    is_langfuse_enabled,
+    langfuse_manager,
+    trace_agent_execution
+)
 
 logger = get_project_logger(__name__)
 
@@ -33,7 +39,7 @@ class AgentConfig:
     
     # 기본 설정
     agent_name: str
-    model_name: str = "gpt-4.1-nano"
+    model_name: str = "gemini-2.5-flash"
     temperature: float = 0.7
     max_tokens: int = 1000
     
@@ -110,16 +116,16 @@ class BaseAgent:
     def _initialize_llm(self):
         """LLM을 초기화합니다."""
         try:
-            # OpenAI API 키 확인
-            api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key and self.config.model_name.startswith("gpt"):
-                logger.warning("OpenAI API key not found. Some features may not work.")
+            # Google API 키 확인
+            api_key = os.getenv("GOOGLE_API_KEY")
+            if not api_key and self.config.model_name.startswith("gemini"):
+                logger.warning("Google API key not found. Some features may not work.")
             
-            self.llm = ChatOpenAI(
+            self.llm = ChatGoogleGenerativeAI(
                 model=self.config.model_name,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
-                api_key=api_key
+                google_api_key=api_key
             )
             
             # 도구가 있으면 LLM에 바인딩
@@ -268,11 +274,25 @@ class BaseAgent:
             self.compiled_graph = self.state_graph.compile(**compile_kwargs)
             self.is_compiled = True
             
-            logger.info("Graph compiled successfully")
+            # Langfuse 추적 설정 로깅
+            if is_langfuse_enabled():
+                logger.info(f"Graph compiled successfully with Langfuse tracking enabled")
+            else:
+                logger.info("Graph compiled successfully")
+                
             return self.compiled_graph
             
         except Exception as e:
             logger.error(f"Graph compilation failed: {e}")
+            
+            # Langfuse 에러 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_error(e, {
+                    "agent_name": self.config.agent_name,
+                    "operation": "graph_compilation",
+                    "model": self.config.model_name
+                })
+            
             raise ConfigurationError(f"Graph compilation failed: {e}")
     
     def create_initial_state(self) -> Dict[str, Any]:
@@ -391,6 +411,7 @@ class BaseAgent:
         
         return recovered_state
     
+    @trace_agent_execution("base_agent")
     def invoke(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         에이전트를 동기적으로 실행합니다.
@@ -409,14 +430,39 @@ class BaseAgent:
             if not isinstance(input_data, dict) or "messages" not in input_data:
                 raise ValueError("Input must contain 'messages' key")
             
+            # Langfuse 콜백 설정
+            invoke_config = {}
+            if is_langfuse_enabled():
+                invoke_config["callbacks"] = get_langfuse_callbacks()
+            
             # 그래프 실행
-            result = self.compiled_graph.invoke(input_data)
+            result = self.compiled_graph.invoke(input_data, config=invoke_config)
+            
+            # Langfuse 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_agent_execution(
+                    agent_name=self.config.agent_name,
+                    input_data=input_data,
+                    output_data=result,
+                    model=self.config.model_name,
+                    operation="invoke"
+                )
             
             logger.info("Agent invocation completed successfully")
             return result
             
         except Exception as e:
             logger.error(f"Agent invocation failed: {e}")
+            
+            # Langfuse 에러 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_error(e, {
+                    "agent_name": self.config.agent_name,
+                    "operation": "invoke",
+                    "input_data": input_data,
+                    "model": self.config.model_name
+                })
+            
             raise
     
     def invoke_with_thread(self, input_data: Dict[str, Any], thread_id: str) -> Dict[str, Any]:
@@ -438,14 +484,38 @@ class BaseAgent:
             return self.invoke(input_data)
         
         try:
+            # 설정 구성 (스레드 + Langfuse)
             config = {"configurable": {"thread_id": thread_id}}
-            result = self.compiled_graph.invoke(input_data, config=config)
+            if is_langfuse_enabled():
+                config["callbacks"] = get_langfuse_callbacks()
+            
+            # Langfuse 세션 추적
+            if is_langfuse_enabled():
+                with langfuse_manager.trace_session(
+                    session_id=thread_id,
+                    agent_name=self.config.agent_name,
+                    model=self.config.model_name
+                ):
+                    result = self.compiled_graph.invoke(input_data, config=config)
+            else:
+                result = self.compiled_graph.invoke(input_data, config=config)
             
             logger.info(f"Agent invocation with thread {thread_id} completed")
             return result
             
         except Exception as e:
             logger.error(f"Agent invocation with thread failed: {e}")
+            
+            # Langfuse 에러 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_error(e, {
+                    "agent_name": self.config.agent_name,
+                    "operation": "invoke_with_thread",
+                    "thread_id": thread_id,
+                    "input_data": input_data,
+                    "model": self.config.model_name
+                })
+            
             raise
     
     async def ainvoke(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -462,11 +532,37 @@ class BaseAgent:
             self.compile_graph()
         
         try:
-            result = await self.compiled_graph.ainvoke(input_data)
+            # Langfuse 콜백 설정
+            invoke_config = {}
+            if is_langfuse_enabled():
+                invoke_config["callbacks"] = get_langfuse_callbacks()
+            
+            result = await self.compiled_graph.ainvoke(input_data, config=invoke_config)
+            
+            # Langfuse 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_agent_execution(
+                    agent_name=self.config.agent_name,
+                    input_data=input_data,
+                    output_data=result,
+                    model=self.config.model_name,
+                    operation="ainvoke"
+                )
+            
             return result
             
         except Exception as e:
             logger.error(f"Async agent invocation failed: {e}")
+            
+            # Langfuse 에러 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_error(e, {
+                    "agent_name": self.config.agent_name,
+                    "operation": "ainvoke",
+                    "input_data": input_data,
+                    "model": self.config.model_name
+                })
+            
             raise
     
     def stream(self, input_data: Dict[str, Any]):
@@ -483,11 +579,39 @@ class BaseAgent:
             self.compile_graph()
         
         try:
-            for chunk in self.compiled_graph.stream(input_data):
+            # Langfuse 콜백 설정
+            stream_config = {}
+            if is_langfuse_enabled():
+                stream_config["callbacks"] = get_langfuse_callbacks()
+            
+            # 스트리밍 실행 및 결과 수집 (Langfuse 로깅용)
+            stream_results = []
+            for chunk in self.compiled_graph.stream(input_data, config=stream_config):
+                stream_results.append(chunk)
                 yield chunk
+            
+            # Langfuse 로깅 (스트리밍 완료 후)
+            if is_langfuse_enabled():
+                langfuse_manager.log_agent_execution(
+                    agent_name=self.config.agent_name,
+                    input_data=input_data,
+                    output_data={"stream_chunks": len(stream_results), "final_result": stream_results[-1] if stream_results else None},
+                    model=self.config.model_name,
+                    operation="stream"
+                )
                 
         except Exception as e:
             logger.error(f"Agent streaming failed: {e}")
+            
+            # Langfuse 에러 로깅
+            if is_langfuse_enabled():
+                langfuse_manager.log_error(e, {
+                    "agent_name": self.config.agent_name,
+                    "operation": "stream",
+                    "input_data": input_data,
+                    "model": self.config.model_name
+                })
+            
             raise
     
     def get_thread_state(self, thread_id: str) -> Optional[Dict[str, Any]]:

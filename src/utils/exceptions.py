@@ -85,6 +85,14 @@ class VideoProcessingError(YouTubeTranscriptError):
         self.video_id = video_id
 
 
+class ProcessingError(YouTubeTranscriptError):
+    """일반적인 처리 관련 예외"""
+    
+    def __init__(self, message: str = "", operation: Optional[str] = None, **kwargs):
+        super().__init__(message, **kwargs)
+        self.operation = operation
+
+
 class EmbeddingError(RAGError):
     """임베딩 생성 관련 예외"""
     pass
