@@ -8,12 +8,17 @@ uvicorn==0.30.5
 gradio==4.44.0
 
 # LangChain & AI
-langchain==0.2.14
+langchain==0.3.0
 langgraph==0.2.14
 openai==1.45.0
 
-# Vector Database
+# Vector Database & Embeddings
 chromadb==0.5.5
+langchain-chroma>=0.2.0
+langchain-huggingface>=0.1.0
+
+# Text Splitters & Processing
+langchain-text-splitters>=0.3.0
 
 # Traditional Database
 psycopg2-binary==2.9.9

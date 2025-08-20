@@ -61,6 +61,14 @@ class ConfigurationError(YouTubeTranscriptError):
     pass
 
 
+class DatabaseError(YouTubeTranscriptError):
+    """데이터베이스 관련 예외"""
+    
+    def __init__(self, message: str = "", operation: Optional[str] = None, **kwargs):
+        super().__init__(message, **kwargs)
+        self.operation = operation
+
+
 class ChannelNotFoundError(YouTubeAPIError):
     """채널을 찾을 수 없을 때 발생하는 예외"""
     
@@ -84,4 +92,9 @@ class EmbeddingError(RAGError):
 
 class ChromaDBError(VectorSearchError):
     """ChromaDB 관련 예외"""
+    pass
+
+
+class VectorStoreError(VectorSearchError):
+    """벡터 저장소 관련 예외"""
     pass 

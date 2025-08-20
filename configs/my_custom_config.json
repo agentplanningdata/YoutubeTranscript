@@ -1,0 +1,19 @@
+{
+  "chunking": {
+    "chunking_strategy": "langchain_recursive",
+    "max_chunk_size": 600,
+    "overlap_size": 30,
+    "preserve_sentence_boundaries": true
+  },
+  "embedding": {
+    "provider": "huggingface",
+    "model_name": "sentence-transformers/all-MiniLM-L6-v2",
+    "batch_size": 50,
+    "device": "cpu"
+  },
+  "search": {
+    "search_type": "mmr",
+    "k": 10,
+    "score_threshold": 0.0
+  }
+}
